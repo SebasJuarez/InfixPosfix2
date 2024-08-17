@@ -59,7 +59,7 @@ def infix_to_postfix(regex):
         postfix += popped
         steps.append(f"Se borra {popped} del stack y se añade a la salida")
 
-    return postfix, steps
+    return postfix
 
 
 def read_and_convert(file_path):
@@ -67,16 +67,15 @@ def read_and_convert(file_path):
         with open(file_path, 'r', encoding="utf-8") as file:
             for line in file:
                 line = line.strip()
+                print(line)
                 if line: 
-                    postfix, steps = infix_to_postfix(line)
-                    yield postfix, steps
+                    postfix = infix_to_postfix(line)
+                    yield postfix
     except FileNotFoundError:
         print(f"Error: No se pudo encontrar el archivo '{file_path}'. Asegúrate de que está en el directorio correcto.")
         return
 
 if __name__ == '__main__':    
     file_path = 'expressions.txt'
-    for postfix, steps in read_and_convert(file_path):
+    for postfix in read_and_convert(file_path):
         print(postfix)
-        for step in steps:
-            print(step)

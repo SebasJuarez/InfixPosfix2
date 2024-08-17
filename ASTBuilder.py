@@ -1,6 +1,5 @@
-from ShuntingYard import read_and_convert
-import sys
 import graphviz
+from ShuntingYard import read_and_convert
 
 class Node:
     def __init__(self, value):
@@ -21,56 +20,46 @@ class BinaryOperator(Node):
 
 def build_ast(postfix):
     stack = []
-    operators = {'|', '.', '*', '?', '+'}  # Asegúrate de que todos tus operadores están aquí
-
-    print(f"Construyendo AST para: {postfix}")  # Debugging: Muestra la expresión postfija
-
+    operators = {'|', '.', '*', '?', '+'}
+    print(f"Construyendo AST para la expresión postfija: {postfix}")
     for char in postfix:
         if char in operators:
-            if char in {'*', '?'}:  # Operadores unarios
-                if not stack:
-                    raise Exception(f"No hay suficientes operandos para el operador unario {char}")
+            if char in {'*', '?', '+'}:
                 operand = stack.pop()
                 node = UnaryOperator(char, operand)
-            else:  # Operadores binarios
-                if len(stack) < 2:
-                    raise Exception(f"No hay suficientes operandos para el operador binario {char}")
+            else:
                 right = stack.pop()
                 left = stack.pop()
                 node = BinaryOperator(char, left, right)
             stack.append(node)
         else:
             stack.append(Node(char))
-
-    if len(stack) != 1:
-        raise Exception("Más de un elemento en la pila después de procesar la expresión, probablemente un error en la entrada")
-
-    return stack.pop()  # Nodo raíz del AST
-
+    return stack.pop()
 
 def visualize_ast(root):
     dot = graphviz.Digraph(comment='AST', format='png')
-    def add_nodes_edges(node):
-        # Crear un nodo en Graphviz
-        dot.node(str(id(node)), label=str(node.value))
-        if hasattr(node, 'child'):  # Si es un operador unario
-            dot.edge(str(id(node)), str(id(node.child)))
-            add_nodes_edges(node.child)
-        if hasattr(node, 'left'):  # Si es un operador binario
-            dot.edge(str(id(node)), str(id(id(node.left))))
-            add_nodes_edges(node.left)
-            dot.edge(str(id(node)), str(id(id(node.right))))
-            add_nodes_edges(node.right)
-    add_nodes_edges(root)
-    return dot
 
+    def add_nodes_edges(node):
+        if node is not None:
+            dot.node(str(id(node)), label=str(node.value))
+            # Verifica si hay un hijo y luego recursivamente añade nodos/aristas
+            if hasattr(node, 'child') and node.child is not None:
+                dot.edge(str(id(node)), str(id(node.child)))
+                add_nodes_edges(node.child)
+            if hasattr(node, 'left') and node.left is not None:
+                dot.edge(str(id(node)), str(id(node.left)))
+                add_nodes_edges(node.left)
+            if hasattr(node, 'right') and node.right is not None:
+                dot.edge(str(id(node)), str(id(node.right)))
+                add_nodes_edges(node.right)
+
+    add_nodes_edges(root)
+    dot.render('output', view=True)
 
 if __name__ == '__main__':
     file_path = 'expressions.txt'
     postfix_expressions = read_and_convert(file_path)
-    for postfix, steps in postfix_expressions:
-        print(f"Postfix recibido: {postfix}")  # Esto te ayudará a ver qué recibe realmente `build_ast`
+    for postfix in postfix_expressions:
+        print(f"Expresión postfija: {postfix}")
         ast_root = build_ast(postfix)
-        dot = visualize_ast(ast_root)
-        dot.render('output', view=True)  # Guarda y muestra el gráfico
-
+        visualize_ast(ast_root)
